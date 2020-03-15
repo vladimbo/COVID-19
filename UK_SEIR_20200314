@@ -1,0 +1,62 @@
+# SEIR model Calibrated for UK based on available confirmed cases data as of 14 03 2020 
+
+import scipy.integrate as spi
+import numpy as np
+import pylab as pl
+
+mu= 630/66440000
+beta=1.5
+sigma=1/10.0
+gamma=1/3.5
+ND=0
+TS=1.0
+S0=0.999999323
+E0=0.000000541842
+I0=0.000000135461
+D0=0
+M=0.04
+INPUT = (S0, E0, I0)
+
+def diff_eqs(INP,t):
+	'''The main set of equations'''
+	Y=np.zeros((3))
+	V = INP
+	Y[0] = mu - beta * V[0] * V[2] - mu * V[0]
+	Y[1] = beta * V[0] * V[2] - sigma * V[1] - mu * V[1]
+	Y[2] = sigma * V[1] - gamma * V[2] - mu * V[2]
+	return Y   # For odeint
+
+
+
+t_start = 0.0; t_end = 250; t_inc = TS
+t_range = np.arange(t_start, t_end+t_inc, t_inc)
+RES = spi.odeint(diff_eqs,INPUT,t_range)
+
+Rec=1. - (RES[:,0]+RES[:,1]+RES[:,2])
+print(RES)
+RES[:,0].tofile('C://B//COVID//SEIR//UK1_SUCSEPT.csv',sep=',')
+RES[:,1].tofile('C://B//COVID//SEIR//UK1_EXP.csv',sep=',')
+RES[:,2].tofile('C://B//COVID//SEIR//UK1_INF.csv',sep=',')
+#RES[:,3].tofile('C://B//COVID//SEIR//UK1_DEAD.csv',sep=',')
+Rec.tofile('C://B//COVID//SEIR//UK1_RECOV.csv',sep=',')
+
+#Ploting
+pl.subplot(311)
+pl.plot(RES[:,0], '-g', label='Susceptibles')
+pl.title('Program_2_6.py')
+pl.xlabel('Time')
+pl.ylabel('Susceptibles')
+pl.subplot(312)
+pl.plot(RES[:,1], '-m', label='Exposed')
+pl.plot(RES[:,2], '-r', label='Infectious')
+pl.legend(loc=0)
+pl.xlabel('Time')
+pl.ylabel('Infected')
+pl.subplot(313)
+pl.plot(Rec, '-k', label='Recovereds')
+#pl.plot(RES[:,3], '-r', label='Deceased')
+pl.xlabel('Time')
+pl.ylabel('Rec/Dec')
+pl.show()
+
+#pl.savefig('C://B//COVID//SEIR//UK1.svg')
